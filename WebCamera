@@ -1,0 +1,6 @@
+# Run the following commands:
+sudo systemctl restart motion
+sudo motion
+
+# To access:
+http://pi-hostname:8081
