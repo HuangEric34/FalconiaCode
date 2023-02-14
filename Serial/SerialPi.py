@@ -16,7 +16,8 @@ if __name__ == '__main__':
             try:
                 while True:
                     cmd=input("Enter command : ")
-                    arduino.write(cmd.encode())
+                    if (cmd == "go"):
+                        arduino.write(cmd.encode())
                     #time.sleep(0.1) #wait for arduino to answer
                     while arduino.inWaiting()==0: pass
                     if  arduino.inWaiting()>0: 
