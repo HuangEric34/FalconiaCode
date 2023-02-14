@@ -18,9 +18,7 @@ void readSerialPort() {
 void sendData() {
  	//write data
  	Serial.print(name);
-  if (msg == "go") {
-     	Serial.print(" received : ");
-  }
+  Serial.print(" received : ");
 }
 
 void loop() {
