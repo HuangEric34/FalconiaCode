@@ -58,4 +58,12 @@ class Drivetrain:
     #     gpio.output(CM1, True)
     #     gpio.output(CM2, False)
 
+    def stop(sec):
+        gpio.output(LM1, False)
+        gpio.output(LM2, False)
+        gpio.output(RM1, False)
+        gpio.output(RM2, False)
+        gpio.output(CM1, False)
+        gpio.output(CM2, False)
+
 gpio.cleanup()
