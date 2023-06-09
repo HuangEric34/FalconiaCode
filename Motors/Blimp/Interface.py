@@ -16,6 +16,8 @@ class Interface:
             "left": self.drivetrain.left,
             "right": self.drivetrain.right,
             "stop": self.drivetrain.stop,
+            "up": self.drivetrain.up,
+            "down": self.drivetrain.down,
             "exit": exit
         }
 
