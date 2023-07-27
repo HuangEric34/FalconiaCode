@@ -8,7 +8,7 @@ import cv2
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", help="")
-ap.add_argument("-a", "--min-area", type=int, default=500, help=00)
+ap.add_argument("-a", "--min-area", type=int, default=500, help="500px")
 args = vars(ap.parse_args())
 # if the video argument is None, then we are reading from webcam
 if args.get("video", None) is None:
@@ -16,7 +16,7 @@ if args.get("video", None) is None:
 	time.sleep(2.0)
 # otherwise, we are reading from a video file
 else:
-	vs = cv2.VideoCapture(args["test"])
+	vs = cv2.VideoCapture(args["video"])
 # initialize the first frame in the video stream
 firstFrame = None
 
@@ -39,7 +39,6 @@ while True:
 	if firstFrame is None:
 		firstFrame = gray
 		continue
-	
 	# compute the absolute difference between the current frame and
 	# first frame
 	frameDelta = cv2.absdiff(firstFrame, gray)
@@ -60,11 +59,10 @@ while True:
 		(x, y, w, h) = cv2.boundingRect(c)
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		text = "Occupied"
-
 	# draw the text and timestamp on the frame
 	cv2.putText(frame, "Room Status: {}".format(text), (10, 20),
 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-	cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
+	cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
 		(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 	# show the frame and record if the user presses a key
 	cv2.imshow("Security Feed", frame)
@@ -74,8 +72,6 @@ while True:
 	# if the `q` key is pressed, break from the lop
 	if key == ord("q"):
 		break
-	
 # cleanup the camera and close any open windows
 vs.stop() if args.get("video", None) is None else vs.release()
 cv2.destroyAllWindows()
-
