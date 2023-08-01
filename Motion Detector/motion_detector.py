@@ -25,7 +25,7 @@ while True:
 	# grab the current frame and initialize the occupied/unoccupied
 	# text
 	frame = vs.read()
-	frame = frame if args.get("video", None) is None else frame[1]
+	# frame = frame if args.get("video", None) is None else frame[1]
 	text = "Unoccupied"
 	# if the frame could not be grabbed, then we have reached the end
 	# of the video
@@ -64,14 +64,16 @@ while True:
 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 	cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
 		(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+	firstFrame = gray
 	# show the frame and record if the user presses a key
 	cv2.imshow("Security Feed", frame)
-	cv2.imshow("Thresh", thresh)
+	# cv2.imshow("Thresh", thresh)
 	# cv2.imshow("Frame Delta", frameDelta)
 	key = cv2.waitKey(1) & 0xFF
 	# if the `q` key is pressed, break from the lop
 	if key == ord("q"):
 		break
+
 # cleanup the camera and close any open windows
 vs.stop() if args.get("video", None) is None else vs.release()
 cv2.destroyAllWindows()
