@@ -12,7 +12,7 @@ ap.add_argument("-a", "--min-area", type=int, default=500, help="500px")
 args = vars(ap.parse_args())
 # if the video argument is None, then we are reading from webcam
 if args.get("video", None) is None:
-	vs = VideoStream(src=0).start()	# do src=1 for rpi
+	vs = VideoStream(src=1).start()
 	time.sleep(2.0)
 # otherwise, we are reading from a video file
 else:
@@ -42,7 +42,7 @@ while True:
 	# compute the absolute difference between the current frame and
 	# first frame
 	frameDelta = cv2.absdiff(firstFrame, gray)
-	thresh = cv2.threshold(frameDelta, 45, 255, cv2.THRESH_BINARY)[1]
+	thresh = cv2.threshold(frameDelta, 35, 255, cv2.THRESH_BINARY)[1]
 	# dilate the thresholded image to fill in holes, then find contours
 	# on thresholded image
 	thresh = cv2.dilate(thresh, None, iterations=2)
@@ -70,6 +70,12 @@ while True:
 	# cv2.imshow("Thresh", thresh)
 	# cv2.imshow("Frame Delta", frameDelta)
 	key = cv2.waitKey(1) & 0xFF
+	if text == "Occupied":
+		print("occupied")
+		# time.sleep(5)
+	else:
+		print("none")
+		continue
 	# if the `q` key is pressed, break from the lop
 	if key == ord("q"):
 		break
