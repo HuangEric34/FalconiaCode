@@ -12,7 +12,7 @@ ap.add_argument("-a", "--min-area", type=int, default=500, help="500px")
 args = vars(ap.parse_args())
 # if the video argument is None, then we are reading from webcam
 if args.get("video", None) is None:
-	vs = VideoStream(src=0).start()
+	vs = VideoStream(src=0).start()	# do src=1 for rpi
 	time.sleep(2.0)
 # otherwise, we are reading from a video file
 else:
