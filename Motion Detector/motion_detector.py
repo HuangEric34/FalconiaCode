@@ -72,7 +72,7 @@ while True:
 	key = cv2.waitKey(1) & 0xFF
 	if text == "Occupied":
 		print("occupied")
-		# time.sleep(5)
+		time.sleep(1.5)
 	else:
 		print("none")
 		continue
