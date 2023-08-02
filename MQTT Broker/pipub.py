@@ -4,7 +4,6 @@ import random
 import time
 
 from paho.mqtt import client as mqtt_client
-import Adafruit_BMP.BMP085 as BMP085
 import json
 
 
