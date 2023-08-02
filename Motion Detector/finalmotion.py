@@ -1,142 +1,135 @@
-# import the necessary packages
-from imutils.video import VideoStream
-import argparse
-import datetime
-import imutils
-import time
-import cv2
-
-# imports for MQTT server
-import random
-import time
-from paho.mqtt import client as mqtt_client
-import json
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 
-broker = 'mqtt.things.ph' #INPUT BROKER NAME
-port = 1883
-topic = "RaspiMQTT" #INPUT TOPIC NAME
+// Replace the next variables with your SSID/Password combination
+const char* ssid = "SG4-3202";
+const char* password = "SG4-3202";
 
-# Generate a Client ID with the publish prefix.
-client_id = f'publish-{random.randint(0, 1000)}'
+// Add your MQTT Broker IP address, example:
+//const char* mqtt_server = "192.168.1.144";
+const char* mqtt_server = "mqtt.things.ph";
+StaticJsonDocument<5000> payload;
+StaticJsonDocument<5000> payload_fields;
 
-username = '64ca784991ec1ac7a26e35cd' #INPUT USERNAME
-password = '09vJQ0RRWiqcFk5l4nMH0Ea5' #INPUT PASSWORD
+WiFiClient espClient;
+PubSubClient client(espClient);
+long lastMsg = 0;
+char msg[50];
+int value = 0;
+char combo[200];
+//uncomment the following lines if you're using SPI
+/*#include <SPI.h>
+#define BME_SCK 18
+#define BME_MISO 19
+#define BME_MOSI 23
+#define BME_CS 5*/
 
-def connect_mqtt():
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            print("Connected to MQTT Broker!")
-        else:
-            print("Failed to connect, return code %d\n", rc)
+// LED Pin
+const int ledPin = 4;
 
-    client = mqtt_client.Client(client_id)
-    client.username_pw_set(username, password)
-    client.on_connect = on_connect
-    client.connect(broker, port)
-    return client
+void setup() {
+  Serial.begin(115200);
+  // default settings
+  // (you can also pass in a Wire library object like &Wire2)  
+//  if (!bme.begin(0x76)) {
+//    Serial.println("Could not find a valid BME280 sensor, check wiring!");
+//    while (1);
+//  }
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
 
-def publish(client, switch):
-    msg_count = 1
-    while True:
-        time.sleep(1)
-        
-        msg = {
-            "hardware_serial": "RaspiMQTT", 
-            "payload_fields": {
-                "switch": switch
-            }
-        } 
-        
-        result = client.publish(topic, payload=json.dumps(msg),qos=0,retain=False)
-        # result: [0, 1]
-        status = result[0]
-        if status == 0:
-            print(f"Send `{msg}` to topic `{topic}`")
-        else:
-            print(f"Failed to send message to topic {topic}")
-        #msg_count += 1
-        #if msg_count > 5:
-            #break
+  pinMode(ledPin, OUTPUT);
+}
 
-# construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-v", "--video", help="")
-ap.add_argument("-a", "--min-area", type=int, default=500, help="500px")
-args = vars(ap.parse_args())
-# if the video argument is None, then we are reading from webcam
-if args.get("video", None) is None:
-	vs = VideoStream(src=1).start()
-	time.sleep(2.0)
-# otherwise, we are reading from a video file
-else:
-	vs = cv2.VideoCapture(args["video"])
-# initialize the first frame in the video stream
-firstFrame = None
+void setup_wifi() {
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
 
-client = connect_mqtt()
-client.loop_start()
+  WiFi.begin(ssid, password);
 
-# loop over the frames of the video
-while True:
-	# grab the current frame and initialize the occupied/unoccupied
-	# text
-	frame = vs.read()
-	# frame = frame if args.get("video", None) is None else frame[1]
-	text = "Unoccupied"
-	# if the frame could not be grabbed, then we have reached the end
-	# of the video
-	if frame is None:
-		break
-	# resize the frame, convert it to grayscale, and blur it
-	frame = imutils.resize(frame, width=500)
-	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-	gray = cv2.GaussianBlur(gray, (21, 21), 0)
-	# if the first frame is None, initialize it
-	if firstFrame is None:
-		firstFrame = gray
-		continue
-	# compute the absolute difference between the current frame and
-	# first frame
-	frameDelta = cv2.absdiff(firstFrame, gray)
-	thresh = cv2.threshold(frameDelta, 35, 255, cv2.THRESH_BINARY)[1]
-	# dilate the thresholded image to fill in holes, then find contours
-	# on thresholded image
-	thresh = cv2.dilate(thresh, None, iterations=2)
-	cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)
-	cnts = imutils.grab_contours(cnts)
-	# loop over the contours
-	for c in cnts:
-		# if the contour is too small, ignore it
-		if cv2.contourArea(c) < args["min_area"]:
-			continue
-		# compute the bounding box for the contour, draw it on the frame,
-		# and update the text
-		(x, y, w, h) = cv2.boundingRect(c)
-		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-		text = "Occupied"
-	# draw the text and timestamp on the frame
-	cv2.putText(frame, "Room Status: {}".format(text), (10, 20),
-		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-	cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
-		(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-	firstFrame = gray
-	# show the frame and record if the user presses a key
-	cv2.imshow("Security Feed", frame)
-	# cv2.imshow("Thresh", thresh)
-	# cv2.imshow("Frame Delta", frameDelta)
-	key = cv2.waitKey(1) & 0xFF
-	if text == "Occupied":
-		publish(client, 1)
-		# time.sleep(5)
-	else:
-		publish(client, 0)
-	# if the `q` key is pressed, break from the lop
-	if key == ord("q"):
-		break
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
 
-# cleanup the camera and close any open windows
-client.loop_stop()
-vs.stop() if args.get("video", None) is None else vs.release()
-cv2.destroyAllWindows()
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void callback(char* topic, byte* message, unsigned int length) {
+//  Serial.print("Message arrived on topic: ");
+//  Serial.print(topic);
+//  Serial.print(". Message: ");
+  String messageTemp;
+  
+  for (int i = 0; i < length; i++) {
+//    Serial.print((char)message[i]);
+    messageTemp += (char)message[i];
+  }
+
+  Serial.println(messageTemp.substring(62, 63));
+
+  // Feel free to add more if statements to control more GPIOs with MQTT
+
+  // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
+  // Changes the output state according to the message
+  if (String(topic) == "RaspiMQTT") {
+    Serial.print("Changing output to ");
+    if(messageTemp.substring(62, 63) == "1"){
+      Serial.println("off");
+    }
+    else if (messageTemp.substring(62, 63) == "0") {
+      Serial.println("on");
+    }
+  }
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect("ESP8266Client","64ca784991ec1ac7a26e35cd","09vJQ0RRWiqcFk5l4nMH0Ea5")) {
+      Serial.println("connected");
+      // Subscribe
+      client.subscribe("RaspiMQTT");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  long now = millis();
+  if (now - lastMsg > 5000) {
+    lastMsg = now;
+    
+//    payload_fields["led"] = 1;
+//    payload_fields["switch"] = 1;
+//    payload_fields["payload_fields"] = 1;
+//
+//    payload["hardware_serial"] = "ESP_32";
+//    payload["payload_fields"] = payload_fields;
+
+   // serializeJson(payload, Serial);
+//    serializeJson(payload, combo);
+//    client.publish("ESP_32", combo);
+    Serial.println(combo);
+  }
+}
