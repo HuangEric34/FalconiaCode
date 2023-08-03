@@ -6,6 +6,7 @@
 // Replace the next variables with your SSID/Password combination
 const char* ssid = "SG4-3202";
 const char* password = "SG4-3202";
+const int relay = 26;
 
 // Add your MQTT Broker IP address, example:
 //const char* mqtt_server = "192.168.1.144";
@@ -26,9 +27,6 @@ char combo[200];
 #define BME_MOSI 23
 #define BME_CS 5*/
 
-// LED Pin
-const int ledPin = 4;
-
 void setup() {
   Serial.begin(115200);
   // default settings
@@ -40,8 +38,7 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-
-  pinMode(ledPin, OUTPUT);
+  pinMode(relay, OUTPUT);
 }
 
 void setup_wifi() {
@@ -74,19 +71,20 @@ void callback(char* topic, byte* message, unsigned int length) {
 //    Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-
-  Serial.println(messageTemp.substring(62, 63));
+//  Serial.println(messageTemp.substring(61, 62));
 
   // Feel free to add more if statements to control more GPIOs with MQTT
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "RaspiMQTT") {
+  if (String(topic) == "espRASPI") {
     Serial.print("Changing output to ");
-    if(messageTemp.substring(62, 63) == "1"){
+    if(messageTemp.substring(61, 62) == "1"){
+      digitalWrite(relay, HIGH);
       Serial.println("off");
     }
-    else if (messageTemp.substring(62, 63) == "0") {
+    else if (messageTemp.substring(61, 62) == "0") {
+      digitalWrite(relay, LOW);
       Serial.println("on");
     }
   }
@@ -97,10 +95,10 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("ESP8266Client","64ca784991ec1ac7a26e35cd","09vJQ0RRWiqcFk5l4nMH0Ea5")) {
+    if (client.connect("ESP8266Client","64c93f454117d46beb4677d9","UAnvMtslycoTolEQ2r6HahUq")) {
       Serial.println("connected");
       // Subscribe
-      client.subscribe("RaspiMQTT");
+      client.subscribe("espRASPI");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
