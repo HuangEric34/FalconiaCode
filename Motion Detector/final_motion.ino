@@ -6,7 +6,8 @@
 // Replace the next variables with your SSID/Password combination
 const char* ssid = "SG4-3202";
 const char* password = "SG4-3202";
-const int relay = 26;
+const int relay = 26
+;
 
 // Add your MQTT Broker IP address, example:
 //const char* mqtt_server = "192.168.1.144";
@@ -71,19 +72,19 @@ void callback(char* topic, byte* message, unsigned int length) {
 //    Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-//  Serial.println(messageTemp.substring(61, 62));
+  Serial.println(messageTemp.substring(59, 60));
 
   // Feel free to add more if statements to control more GPIOs with MQTT
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "espRASPI") {
+  if (String(topic) == "espCAM") {
     Serial.print("Changing output to ");
-    if(messageTemp.substring(61, 62) == "1"){
+    if(messageTemp.substring(59, 60) == "1"){
       digitalWrite(relay, HIGH);
       Serial.println("off");
     }
-    else if (messageTemp.substring(61, 62) == "0") {
+    else if (messageTemp.substring(59, 60) == "0") {
       digitalWrite(relay, LOW);
       Serial.println("on");
     }
@@ -98,7 +99,7 @@ void reconnect() {
     if (client.connect("ESP8266Client","64c93f454117d46beb4677d9","UAnvMtslycoTolEQ2r6HahUq")) {
       Serial.println("connected");
       // Subscribe
-      client.subscribe("espRASPI");
+      client.subscribe("espCAM");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
